@@ -6,7 +6,7 @@
 # This program is a simulation of Diffusion-limited Aggregation(DLA) model 
 # 
 # liyang6pi5@icloud.com
-# Copyleft liyang JLU Physics 2014
+# Copyleft liyang JLU Physics 2018
  
 from Tkinter import *
 import random
