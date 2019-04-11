@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 # -*- coding: UTF-8 -*-
 #
 # Please using python 2.7 run this code
@@ -6,7 +6,7 @@
 # This program is a simulation of Diffusion-limited Aggregation(DLA) model 
 # 
 # liyang6pi5@icloud.com
-# Copyleft liyang JLU Physics 2014
+# Copyleft liyang JLU Physics 2018
  
 from Tkinter import *
 import random
@@ -177,7 +177,7 @@ class ArrayPlot:
     self.data_row_size = len(array_data)                               # size of the data array
     self.data_column_size = len(array_data[0])
     self.array_data = array_data
-    self.color_dict = {DlaData.kNone:'white', DlaData.kExist:'black'}  # pixel color in different state
+    self.color_dict = {DlaData.kNone:'black', DlaData.kExist:'white'}  # pixel color in different state
     
     ### crate the blank window
     self.root = Tk()
@@ -206,7 +206,7 @@ class ArrayPlot:
     self.root.geometry(windows_position_info) 
 
     ### set the canvas 
-    self.canvas = Canvas(self.root, bg = 'white')
+    self.canvas = Canvas(self.root, bg = 'black')
     self.init_canvas()
     self.canvas.pack()   
     self.canvas.config(width=size_window_length, height=size_window_width)
@@ -282,8 +282,8 @@ def player_guide_interface():
   print('                         Simulation Program')
   print(' ')
   print("                   LiYang (liyang6pi5@icloud.com)")
-  print("                     Last Update Date: 2018.2.28 ")
-  print("                           Version: 1.1.0")
+  print("                     Last Update Date: 2018.3.1 ")
+  print("                           Version: 1.2.0")
   print("                        Copyleft liyang@JPAs")
   print("                                                            ")
 
@@ -292,10 +292,13 @@ def player_guide_interface():
     print("******************************")
     print("* Set the Basic Parameter... *")
     print("******************************")
-    print('Observe the Pattern of Every Step in the Evolution(Y/N):')
+    print('Observe the Pattern of Every Step in the Evolution(Y/N/D):')
     print("> 'Y' : 'Yes, enable the step by step observation, please!'")
-    print("> 'N' : 'No, thanks.'")
+    print("> 'N' : 'No, thanks. Just show me the final pattern in a window'")
+    print("> 'D' : 'What? No, I even do not want to see the output window!")
+    print(">        JUST OUTPUT A DATA FILE! Understand?'")
     observe_every_evolution = raw_input('>>> ')
+    data_file_only_mode = False
     if ('Y' == observe_every_evolution) or ('y' == observe_every_evolution):
       observe_every_evolution = True
       print('+----------------------------------------------------------------+')
@@ -305,8 +308,11 @@ def player_guide_interface():
       print('|and seriously reduce the calculating speed.                     |')
       print('|Strongly suggest that DO NOT open this function,                |')
       print('|unless the 2D Data Array Length is less that 50.                |')
-      print('+----------------------------------------------------------------+')     
+      print('+----------------------------------------------------------------+')   
     else:
+      if ('D' == observe_every_evolution) or ('d' == observe_every_evolution):
+        data_file_only_mode = True
+        
       observe_every_evolution = False
 
     print('  ')
@@ -379,11 +385,20 @@ def player_guide_interface():
       for init_nuclei_list_index in range(init_nuclei_num):
         init_nuclei_array_char = raw_input('#%d >>> ' % (init_nuclei_list_index+1))
         if '' != init_nuclei_array_char:        # if do not input anything, keep default value
-          init_nuclei_array_char_common_index = init_nuclei_array_char.find(',')
-          init_nuclei_coordinate_x = int(init_nuclei_array_char[:init_nuclei_array_char_common_index])
-          init_nuclei_coordinate_y = int(init_nuclei_array_char[init_nuclei_array_char_common_index+1:])
+          #init_nuclei_array_char_index = init_nuclei_array_char.find(',')
+          for init_nuclei_array_char_index in range(len(init_nuclei_array_char)):
+            if ord(init_nuclei_array_char[init_nuclei_array_char_index])<ord('0') or \
+               ord(init_nuclei_array_char[init_nuclei_array_char_index])>ord('9'):
+              break
+          init_nuclei_coordinate_x = int(init_nuclei_array_char[:init_nuclei_array_char_index])
+          init_nuclei_coordinate_y = int(init_nuclei_array_char[init_nuclei_array_char_index+1:])
           init_nuclei_coordinate = np.array((init_nuclei_coordinate_x, init_nuclei_coordinate_y))
           init_nuclei_array[init_nuclei_list_index] = init_nuclei_coordinate
+        #CHECK if the init nuclei's position is out of range
+        if init_nuclei_array[init_nuclei_list_index][0] > dla_data_width:
+          init_nuclei_array[init_nuclei_list_index] = (dla_data_width-1, init_nuclei_array[init_nuclei_list_index][1])
+        if init_nuclei_array[init_nuclei_list_index][1] > dla_data_length:
+          init_nuclei_array[init_nuclei_list_index] = (init_nuclei_array[init_nuclei_list_index][0], dla_data_length-1)
 
     print("  ")
     print("*******************************")
@@ -391,11 +406,14 @@ def player_guide_interface():
     print("*******************************")
     print(' BASIC PARAMETER LIST:')
     print('|--------------------------------------')
+    print('| Data File Only Mode:      %s' % data_file_only_mode)
     print('| Observe Every Evolution:  %s' % observe_every_evolution)
     print('| Use Periodic Lattice:     %s' % enable_periodic_map)
     print('| 2D Data Array Width:      %d' % dla_data_width)
     print('| 2D Data Array Length:     %d' % dla_data_length)
-    print('| Kernel Number:            %d' % kernel_num)
+    print('| Max Kernel Number:        %d' % (dla_data_width*dla_data_length))
+    print('| Set Kernel Number:        %d' % kernel_num)
+    print("| Kernel Occupancy:         %.1f %%" % (float(kernel_num)/(dla_data_width*dla_data_length)*100))
     print('| Init Nuclei Number:       %d' % init_nuclei_num) 
     for init_nuclei_list_index in range(init_nuclei_num):
       if not init_nuclei_list_index:
@@ -425,7 +443,9 @@ def player_guide_interface():
   print("* Caluculation Processing... *")
   print("******************************")
     
-  return kernel_num, dla_data_length, dla_data_width, observe_every_evolution, enable_periodic_map ,init_nuclei_array
+  return kernel_num, dla_data_length, dla_data_width, \
+         observe_every_evolution,data_file_only_mode, \
+         enable_periodic_map, init_nuclei_array
 
 
 def print_processing_bar(finished_count, all_count):
@@ -444,16 +464,13 @@ def print_processing_bar(finished_count, all_count):
   sys.stdout.flush()
   sys.stdout.write(delete_print)
 
-  return process_print
 
-
-def dla_data_saved(kernel_num, dla_data_length, dla_data_width, 
-                   enable_periodic_map, init_nuclei_array, final_position_data_sum):
+def dla_data_saved(): 
   if enable_periodic_map:
     filename_arraydata = str(dla_data_length)+'X'+str(dla_data_width)+\
-                         '-'+str(kernel_num)+'-'+str(len(init_nuclei_array))+'-[peridoic].dlaarray'
+                         '-'+str(kernel_num)+'-'+str(len(init_nuclei_array))+'-[periodic].dlaarray'
     filename_plotdata = str(dla_data_length)+'X'+str(dla_data_width)+\
-                         '-'+str(kernel_num)+'-'+str(len(init_nuclei_array))+'-[peridoic].dlaplot'
+                         '-'+str(kernel_num)+'-'+str(len(init_nuclei_array))+'-[periodic].dlaplot'
   else:
     filename_arraydata = str(dla_data_length)+'X'+str(dla_data_width)+\
                          '-'+str(kernel_num)+'-'+str(len(init_nuclei_array))+'-[aperiodic].dlaarray'
@@ -485,6 +502,7 @@ def program_complete():
   print('  ')
   print('>>> Program Complete! <<<')
   print('Quitting...')
+  print('  ')
 
 #######################################################
 #==================== MAIN CODE =======================
@@ -492,13 +510,15 @@ def program_complete():
 if __name__ == '__main__':
   #****Start the Player Guide Interface****
   kernel_num, dla_data_length, dla_data_width, \
-  observe_every_evolution, enable_periodic_map, init_nuclei_array = player_guide_interface()
+  observe_every_evolution, data_file_only_mode, \
+  enable_periodic_map, init_nuclei_array = player_guide_interface()
   
   #****DLA Data Part Set ****
   dla_data = DlaData(dla_data_length, dla_data_width, init_nuclei_array, enable_periodic_map)
 
   #****DLA Plot Part Set****
-  dla_plot = ArrayPlot(dla_data.map)
+  if not data_file_only_mode:
+    dla_plot = ArrayPlot(dla_data.map)
 
   #****Evolution Calculation START****
   # 2D array to save the point coordinate of the final pattern
@@ -510,7 +530,7 @@ if __name__ == '__main__':
     if observe_every_evolution:
       dla_plot.plot_pixel()
     #processing bar print
-    process_print = print_processing_bar(step_index, kernel_num)
+    print_processing_bar(step_index, kernel_num)
     
     while not dla_data.is_stick_to_nuclei():
       dla_data.random_move_free_kernel()
@@ -521,11 +541,12 @@ if __name__ == '__main__':
     # save the point coordinate of the final pattern
     final_position_data_sum[step_index-1,:] = dla_data.free_kernel 
   
-  print(process_print+'         ')
+  print_processing_bar(kernel_num+1, kernel_num)
+  print('')
   print(">>> Calculation Complete!!! <<<")
 
   #****Output the Final Pattern****
-  if not observe_every_evolution:    
+  if (not observe_every_evolution) and (not data_file_only_mode):    
     print('     ')
     print("***************************")
     print("**** Pattern Output... ****")
@@ -535,14 +556,13 @@ if __name__ == '__main__':
     print('>>> Final Pattern is create!!! <<<')
   
   #****Tkinter Mainloop****
-  print('  ')
-  print('> Close the Pattren Output Window to save the calculate data.')
-  dla_plot.canvas.mainloop()     
+  if not data_file_only_mode:
+    print('  ')
+    print('> Close the Pattren Output Window to save the calculate data.')
+    dla_plot.canvas.mainloop()     
 
   #****Data Save****
-  dla_data_saved(kernel_num, dla_data_length, dla_data_width,
-                 enable_periodic_map, init_nuclei_array,
-                 final_position_data_sum)
+  dla_data_saved()
   
   #****Quit Program****
   program_complete()
@@ -551,17 +571,30 @@ if __name__ == '__main__':
 #----------------------------------------------#
 ###########  PROGRAM HISTORY LOG  ##############
 #----------------------------------------------#
-#2018.2.25  Program coding Start
-#2018.2.26  *** Version 1.0.0 EXPRESS ***
-#2018.2.27  ADD: The periodic map 
-#           ADD: The multiple initial nuclei
-#           *** Version 1.0.2 EXPRESS ***
-#2018.2.28  FIX: Periodic support - 2D data assignment bug fix.
-#                Bug : self.map[self.row-1, :] = self.map[1, :]
-#                Fix : self.map[self.row-1, 1:self.column-2] = self.map[1, 1:self.column-2]
-#           DELETE: Delete the FIX upon and abandon the algorithm of PERIODIC before 
-#           UPDATE: Update the algorithm of PERIODIC MAP 
-#           ADD: Border lines in canvas
-#           ADD: Input check function
-#           *** Version 1.1.0 EXPRESS ***
+# 2018.2.25  Program coding Start
+#
+# 2018.2.26  *** Version 1.0.0 EXPRESS ***
+#
+# 2018.2.27  ADD: The periodic map 
+#            ADD: The multiple initial nuclei
+#            *** Version 1.0.2 EXPRESS ***
+#
+# 2018.2.28  FIX: Periodic support - 2D data assignment bug fix.
+#                 Bug : self.map[self.row-1, :] = self.map[1, :]
+#                 Fix : self.map[self.row-1, 1:self.column-2] = self.map[1, 1:self.column-2]
+#            DELETE: Delete the FIX upon and abandon the algorithm of PERIODIC before 
+#            UPDATE: Update the algorithm of PERIODIC MAP 
+#            ADD: Border lines in canvas
+#            ADD: Input check function
+#            *** Version 1.1.0 EXPRESS ***
+#
+# 2018.2.29  UPDATE: The dla_data_saved function's parameter transport.
+#            FIX:  Some spell error
+#            ADD:  Init Nuclei Coordinate input check
+#            ADD:  Bash script to run the main code
+#            ADD:  Non-plot mode
+#            *** Version 1.1.1 EXPRESS ***
+#  
+# 2018.3.1  UPDATE:  Update the init nuclei coordinate set divided symbol 
+#           *** Version 1.1.1 EXPRESS ***
 # *END*

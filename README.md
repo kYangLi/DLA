@@ -1,9 +1,10 @@
 # DLA game
-This program is a simulation of Diffusion-limited Aggregation(DLA) model. 
 
-Python2.7 Support
+Simulation of Diffusion-limited Aggregation(DLA) model. 
 
-Use command below runing this game
+Python2.7 Support Only
+
+Runing this game by:
 ```
 ./DlaGame
 ``` 
