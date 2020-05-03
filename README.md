@@ -2,9 +2,9 @@
 
 Simulation of Diffusion-limited Aggregation(DLA) model. 
 
-Python2.7 Support Only
+Python3 Support Only
 
 Runing this game by:
 ```
-./DlaGame
+python3 dla.py
 ``` 
